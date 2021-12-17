@@ -47,6 +47,11 @@ function make(
     privates::Vector{T} where T <: Function = Vector{Function}()
 )
     module_block = quote
+        target_name = nameof($target) |> Symbol
+        quote
+            using $target_name
+        end |> eval
+
         # Setup instance parameters.
         for i ∈ $instances
             quote

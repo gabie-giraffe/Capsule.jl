@@ -1,7 +1,5 @@
-using Capsule
-using Test
-
-include("./TestModule.jl")
+push!(LOAD_PATH, @__DIR__)
+using Capsule, Test, TestModule
 
 TestModule.@testmodule myTest "valueA" "valueB"
 
