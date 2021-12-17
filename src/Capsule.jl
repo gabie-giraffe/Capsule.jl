@@ -2,11 +2,44 @@ module Capsule
 
 export make
 
+"""
+    Instance(name, value)
+
+Declares a value auto-wireing for the functions of the encapsulated module.
+"""
 struct Instance{T}
     name::Symbol
     value::T
 end
 
+"""
+    make(instance_name, target, instances, [privates])
+
+For use inside of `macro`, generate an instance module named `instance_name` with proxies for all 
+functions defined within a `target` module. Functions that defines arguments that match the `instances` 
+provided are auto-wired and removed from the arguments in the instance module.
+
+Optionally, a list of `privates` functions from the `target` module can be specified. These functions
+will not have proxy generated for them. They will effectively be unaccessible from the instance module.
+
+# Examples
+```julia
+module MyApi
+macro make(instance_name::Symbol, baseurl::String)
+    Capsule.make(
+        instance_name, 
+        MyApi, 
+        [Capsule.Instance(:ctx, ApiContext(baseurl))],
+        [MyApi.my_util_fn]
+    )
+end
+end
+...
+
+MyApi.@make ma "https://my.service.io"
+ma.get_resource(7)
+```
+"""
 function make(
     instance_name::Symbol, 
     target::Module, 
@@ -14,11 +47,7 @@ function make(
     privates::Vector{T} where T <: Function = Vector{Function}()
 )
     module_block = quote
-        # target_symbol = Symbol($target)
-        # quote 
-        #     using $target_symbol
-        # end |> eval
-
+        # Setup instance parameters.
         for i ∈ $instances
             quote
                 $(i.name) = $(i.value)
